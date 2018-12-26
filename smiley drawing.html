@@ -1,0 +1,126 @@
+<html>
+	<head>
+		<title>Stupid ass experiment part 2</title>
+	</head>
+	<body>
+		<h1>Rate me</h1>
+		
+		<p id="happinessText"></p>
+		<button id="clearCanvasSimple" type="button">Clear</button>
+		<br/>
+		<br/>
+		<p id="happinessDetection">Draw!</p>
+		<canvas id="canvas" width="350" height="350" style="border: 1px solid;" />
+	</body>
+	<script>
+		var canvas = document.getElementById('canvas');
+		var context = canvas.getContext("2d");
+		var currentShape = new Array();
+		currentShape.ClickX = new Array();
+		currentShape.ClickY = new Array();
+		var shapes = new Array();
+		var clickDrag = new Array();
+		var paint = false;
+		
+		document.getElementById("clearCanvasSimple").addEventListener('mousedown', mousedownclear);
+		function mousedownclear(e) {
+			clickDrag = new Array();
+			shapes = new Array();
+			clearCanvas(); 
+		};
+		
+		function clearCanvas()
+		{
+			document.getElementById('happinessDetection').innerHTML = 'Draw!';
+			context.clearRect(0, 0, 350, 350);
+		}
+		
+		document.getElementById("canvas").addEventListener('mousedown', mousedown);
+		function mousedown(e) {
+			var mouseX = e.pageX - this.offsetLeft;
+			var mouseY = e.pageY - this.offsetTop;
+			
+			// New paint started
+			if (!paint) {
+				shapes.push(currentShape);
+				paint = true;
+			}
+			
+			addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+			redraw();
+		};
+		
+		document.getElementById("canvas").addEventListener('mousemove', mousemove);
+		function mousemove(e){
+		  if(paint){
+			addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop, true);
+			redraw();
+		  }
+		};
+		
+		document.getElementById("canvas").addEventListener('mouseup', mouseup);
+		function mouseup(e){
+		  paint = false;
+		  currentShape = new Array();
+		  currentShape.ClickX = new Array();
+		  currentShape.ClickY = new Array();
+		  detectHappiness();
+		};
+		
+		document.getElementById("canvas").addEventListener('mouseleave', mouseleave);
+		function mouseleave(e){
+		  paint = false;
+		};
+
+		function addClick(x, y, dragging)
+		{
+			currentShape.ClickX.push(x);
+			currentShape.ClickY.push(y);
+			clickDrag.push(dragging);
+		}
+		
+		function redraw(){
+		  context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clears the canvas
+		  
+		  context.strokeStyle = "#000";
+		  context.lineJoin = "round";
+		  context.lineWidth = 5;
+		  
+		  for (var i = 0; i < shapes.length; i++) {
+			  for(var j=0; j < shapes[i].ClickX.length; j++) {		
+				context.beginPath();
+				if(clickDrag[j] && j){
+				  context.moveTo(shapes[i].ClickX[j-1], shapes[i].ClickY[j-1]);
+				 }else{
+				   context.moveTo(shapes[i].ClickX[j]-1, shapes[i].ClickY[j]);
+				 }
+				 context.lineTo(shapes[i].ClickX[j], shapes[i].ClickY[j]);
+				 context.closePath();
+				 context.stroke();
+			  }
+		  }
+					
+		  
+		}
+		
+		function detectHappiness() {
+			for (let i = 0; i < shapes.length; i++) {
+				// low -> high -> low => Smile
+				// high -> low -> high = Frown
+				let controlPointStart = shapes[i].ClickY[0];
+				let controlPointMiddle = shapes[i].ClickY[Math.round(shapes[i].ClickY.length / 2)];
+				let controlPointEnd = shapes[i].ClickY[shapes[i].ClickY.length - 1];
+			
+				if (controlPointStart < controlPointMiddle
+					&& controlPointMiddle > controlPointEnd) {
+					document.getElementById('happinessDetection').innerHTML = 'Happy!';
+				}
+				
+				else if (controlPointStart > controlPointMiddle
+					&& controlPointMiddle < controlPointEnd) {
+					document.getElementById('happinessDetection').innerHTML = 'Sad!';
+				}
+			}
+		}
+	</script>
+</html>
